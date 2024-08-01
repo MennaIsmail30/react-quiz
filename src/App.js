@@ -10,13 +10,18 @@ import Question from './components/Question';
 import NextButton from './components/NextButton';
 import Progress from './components/Progress';
 import FinishScreen from './components/FinishScreen';
+import Timer from './components/Timer';
+import Footer from './components/Footer';
+const SECS_PER_QUESTION = 30;
 const initialState = {
+
   questions: [],
 
   status: 'loading',
   index: 0,
   answer: null,
-  points: 0
+  points: 0,
+  secondsRemaining: 10
 };
 function reducer(state, action) {
   switch (action.type) {
@@ -30,8 +35,12 @@ function reducer(state, action) {
         ...state,
         status: "error",
       };
-    case 'start':
-      return { ...state, status: "active" };
+    case "start":
+      return {
+        ...state,
+        status: "active",
+        secondsRemaining: state.questions.length * SECS_PER_QUESTION,
+      };
     case 'newAnswer':
       const question = state.questions.at(state.index)
       return {
@@ -53,6 +62,8 @@ function reducer(state, action) {
         answer: null,
         points: 0
       };
+    case 'tick':
+      return { ...state, secondsRemaining: state.secondsRemaining - 1, status: state.secondsRemaining === 0 ? "finished" : state.status }
     default:
       throw new Error('Action unKnown')
 
@@ -60,7 +71,7 @@ function reducer(state, action) {
   }
 }
 function App() {
-  const [{ questions, status, index, answer, points }, despatch] = useReducer(reducer, initialState)
+  const [{ questions, status, index, answer, points, secondsRemaining }, despatch] = useReducer(reducer, initialState)
   const numQuestions = questions.length;
   const maxPossiblePoints = questions.reduce((prev, cur) => prev + cur.points, 0)
   useEffect(function () {
@@ -81,7 +92,12 @@ function App() {
             <Progress answer={answer} index={index} numQuestions={numQuestions} points={points}
               maxPossiblePoints={maxPossiblePoints} />
             <Question question={questions[index]} dispatch={despatch} answer={answer} />
-            <NextButton despatch={despatch} answer={answer} index={index} numQuestions={numQuestions} />
+            <Footer>
+
+
+              <Timer despatch={despatch} secondsRemaining={secondsRemaining} />
+              <NextButton despatch={despatch} answer={answer} index={index} numQuestions={numQuestions} />
+            </Footer>
 
           </>
         )}
